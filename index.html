@@ -228,13 +228,18 @@ function renderCurrentTab() {
 }
 
 // ─── Login / Logout ───
+let loginTimer = null;
 function doLogin() {
   const pid = document.getElementById("pid-input").value.trim();
-  if (!pid) return;
+  if (!pid || loginTimer) return;
   const err = document.getElementById("login-error");
   const loader = document.getElementById("login-loader");
   err.style.display = "none";
   loader.style.display = "block";
+
+  // نقطع أي اتصال قديم
+  if (mqttClient) { mqttClient.end(true); mqttClient = null; }
+  mqttConnected = false;
 
   // نتصل بـ MQTT ونشترك في topic الطفل
   currentParentId = pid;
@@ -243,28 +248,29 @@ function doLogin() {
   // نستنى البيانات (تصل خلال 1-5 ثواني)
   let waited = 0;
   const maxWait = 30;
-  const iv = setInterval(() => {
+  loginTimer = setInterval(() => {
     waited++;
     if (childInfo && childInfo.name) {
-      clearInterval(iv);
+      clearInterval(loginTimer); loginTimer = null;
       loader.style.display = "none";
       if (document.getElementById("save-pid").checked)
         localStorage.setItem("parent_id", pid);
       showApp();
     } else if (waited >= maxWait) {
-      clearInterval(iv);
+      clearInterval(loginTimer); loginTimer = null;
       loader.style.display = "none";
       err.textContent = mqttConnected ? "رمز الدخول غير صحيح أو لم تصل البيانات بعد، حاول مرة أخرى" : "تعذر الاتصال بالخادم، تحقق من اتصالك بالإنترنت";
       err.style.display = "block";
       currentParentId = "";
       mqttConnected = false;
-      if (mqttClient) { mqttClient.end(); mqttClient = null; }
+      if (mqttClient) { mqttClient.end(true); mqttClient = null; }
     }
   }, 1000);
 }
 
 function doLogout() {
   localStorage.removeItem("parent_id");
+  if (loginTimer) { clearInterval(loginTimer); loginTimer = null; }
   currentParentId = "";
   mqttConnected = false;
   childInfo = {}; childProgress = {}; childMessages = []; childReminders = [];
