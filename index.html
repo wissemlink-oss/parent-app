@@ -164,11 +164,18 @@ function fmtDateTime(d) {
 // ─── MQTT Connect ───
 function connectMQTT(parentId) {
   try {
-    mqttClient = mqtt.connect(MQTT_CONFIG.broker, {
+    mqttClient = mqtt.connect({
+      hostname: "92b691ccb7374ba8ad5ad798326a8bd0.s1.eu.hivemq.cloud",
+      port: 8884,
+      path: "/mqtt",
+      protocol: "wss",
       username: MQTT_CONFIG.username,
       password: MQTT_CONFIG.password,
       clientId: "parent_" + parentId + "_" + Math.random().toString(36).substr(2,8),
       clean: true,
+      protocolVersion: 4,
+      keepalive: 30,
+      reconnectPeriod: 3000,
     });
 
     mqttClient.on("connect", () => {
@@ -234,7 +241,7 @@ function doLogin() {
 
   // نستنى البيانات (تصل خلال 1-5 ثواني)
   let waited = 0;
-  const maxWait = 15;
+  const maxWait = 30;
   const iv = setInterval(() => {
     waited++;
     if (childInfo && childInfo.name) {
@@ -244,7 +251,7 @@ function doLogin() {
     } else if (waited >= maxWait) {
       clearInterval(iv);
       loader.style.display = "none";
-      err.textContent = mqttConnected ? "رمز الدخول غير صحيح" : "تعذر الاتصال بالخادم، تحقق من اتصالك بالإنترنت";
+      err.textContent = mqttConnected ? "رمز الدخول غير صحيح أو لم تصل البيانات بعد، حاول مرة أخرى" : "تعذر الاتصال بالخادم، تحقق من اتصالك بالإنترنت";
       err.style.display = "block";
       currentParentId = "";
       mqttConnected = false;
