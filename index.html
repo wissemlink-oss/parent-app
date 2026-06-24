@@ -93,6 +93,9 @@ body{font-family:-apple-system,'Segoe UI','Noto Naskh Arabic',sans-serif;backgro
       <input id="pid-input" type="text" inputmode="text" autocomplete="off"
              placeholder="🔑 أدخل رمز الدخول" maxlength="20" dir="ltr"
              onkeydown="if(event.key==='Enter')doLogin()">
+      <label style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.6);font-size:12px;margin-top:8px;justify-content:center">
+        <input type="checkbox" id="save-pid" checked> حفظ رمز الدخول
+      </label>
       <div id="login-error" class="login-error"></div>
       <div id="login-loader" class="login-loader"></div>
       <button onclick="doLogin()">دخول</button>
@@ -242,6 +245,8 @@ function doLogin() {
     if (childInfo && childInfo.name) {
       clearInterval(iv);
       loader.style.display = "none";
+      if (document.getElementById("save-pid").checked)
+        localStorage.setItem("parent_id", pid);
       showApp();
     } else if (waited >= maxWait) {
       clearInterval(iv);
@@ -256,6 +261,7 @@ function doLogin() {
 }
 
 function doLogout() {
+  localStorage.removeItem("parent_id");
   currentParentId = "";
   mqttConnected = false;
   childInfo = {}; childProgress = {}; childMessages = []; childReminders = [];
@@ -462,7 +468,12 @@ function renderProgress() {
   el.innerHTML = html;
 }
 
-// ─── Auto focus ───
+// ─── Auto load saved ID ───
+const saved = localStorage.getItem("parent_id");
+if (saved) {
+  document.getElementById("pid-input").value = saved;
+  document.getElementById("save-pid").checked = true;
+}
 document.getElementById("pid-input").focus();
 </script>
 </body>
