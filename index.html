@@ -463,7 +463,7 @@ function renderProgress() {
   const correct = stats.total_correct || 0;
   const wrong = stats.total_wrong || 0;
   const attempts = stats.total_attempts || 0;
-  const bestGame = stats.best_game || "—";
+  const bestGame = stats.best_game && typeof stats.best_game === "object" ? stats.best_game.game_label : (stats.best_game || "—");
   html += `
     <div class="card">
       <div class="card-title">📊 إحصائيات الأداء</div>
@@ -489,21 +489,16 @@ function renderProgress() {
     </div>`;
 
   // ── By Game Type ──
-  const typeKeys = Object.keys(byType);
-  if (typeKeys.length > 0) {
+  const byType = Array.isArray(stats.by_type) ? stats.by_type : [];
+  if (byType.length > 0) {
     html += `<div class="card"><div class="card-title">🎮 حسب نوع اللعبة</div>`;
-    typeKeys.forEach(k => {
-      const g = byType[k];
-      const pct = g.total > 0 ? Math.round(100 * g.correct / g.total) : 0;
+    byType.forEach(g => {
+      const pct = Math.round(g.avg_pct || 0);
       const c = pct >= 70 ? "#16a34a" : pct >= 40 ? "#d97706" : "#dc2626";
       html += `
         <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9">
-          <div style="flex:1;font-size:13px">${g.label || k}</div>
-          <div style="display:flex;gap:10px;font-size:12px;color:var(--gray)">
-            <span>✅${g.correct}</span>
-            <span>❌${g.wrong}</span>
-            <span>📌${g.sessions}</span>
-          </div>
+          <div style="flex:1;font-size:13px">${g.game_label || g.game_type || "—"}</div>
+          <div style="font-size:12px;color:var(--gray)">📌${g.n || 0} جلسات</div>
           <div style="font-weight:700;font-size:14px;color:${c};min-width:40px;text-align:left">${pct}%</div>
         </div>`;
     });
