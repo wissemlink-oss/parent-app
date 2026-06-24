@@ -93,6 +93,9 @@ body{font-family:-apple-system,'Segoe UI','Noto Naskh Arabic',sans-serif;backgro
       <input id="pid-input" type="text" inputmode="text" autocomplete="off"
              placeholder="🔑 أدخل رمز الدخول" maxlength="20" dir="ltr"
              onkeydown="if(event.key==='Enter')doLogin()">
+      <label style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.6);font-size:12px;margin-top:8px;justify-content:center">
+        <input type="checkbox" id="save-pid" checked> حفظ رمز الدخول
+      </label>
       <div id="login-error" class="login-error"></div>
       <div id="login-loader" class="login-loader"></div>
       <button onclick="doLogin()">دخول</button>
@@ -234,6 +237,8 @@ function doLogin() {
   setTimeout(() => {
     loader.style.display = "none";
     if (childInfo && childInfo.name) {
+      if (document.getElementById("save-pid").checked)
+        localStorage.setItem("parent_id", pid);
       showApp();
     } else {
       err.textContent = "رمز الدخول غير صحيح";
@@ -245,6 +250,7 @@ function doLogin() {
 }
 
 function doLogout() {
+  localStorage.removeItem("parent_id");
   currentParentId = "";
   childInfo = {}; childProgress = {}; childMessages = []; childReminders = [];
   childStats = {}; childSessions = [];
@@ -450,8 +456,15 @@ function renderProgress() {
   el.innerHTML = html;
 }
 
-// ─── Auto focus ───
-document.getElementById("pid-input").focus();
+// ─── Auto load saved ID ───
+const saved = localStorage.getItem("parent_id");
+if (saved) {
+  document.getElementById("pid-input").value = saved;
+  document.getElementById("save-pid").checked = true;
+  setTimeout(doLogin, 500);
+} else {
+  document.getElementById("pid-input").focus();
+}
 </script>
 </body>
 </html>
