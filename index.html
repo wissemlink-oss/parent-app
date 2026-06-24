@@ -66,6 +66,9 @@ body{font-family:-apple-system,'Segoe UI','Noto Naskh Arabic',sans-serif;backgro
 .rem-item .top{display:flex;justify-content:space-between;align-items:center}
 .rem-item .date{font-size:11px;color:var(--gray);margin-top:4px}
 .rem-item .note{font-size:12px;color:var(--gray);margin-top:4px;line-height:1.5}
+.stat-box{background:#f8fafc;border-radius:10px;padding:12px;text-align:center}
+.stat-val{font-size:28px;font-weight:800;line-height:1.2}
+.stat-lbl{font-size:11px;color:var(--gray);margin-top:2px}
 .status-tag{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600}
 .st-pending{background:#fef3c7;color:var(--warning)}
 .st-done{background:#dcfce7;color:var(--success)}
@@ -417,50 +420,114 @@ function renderReminders() {
   el.innerHTML = html;
 }
 
-// ─── Progress ───
+// ─── Progress (تقرير مفصل) ───
 function renderProgress() {
   const el = document.getElementById("tab-progress");
   const stats = childStats || {};
   const sessions = childSessions || [];
   const prog = childProgress || {};
-  const history = []; // MQTT bridge لا ينشر history بعد
+  const byType = stats.by_type || {};
 
-  function devHtml(val) {
-    const c = val > 0 ? "#16a34a" : val < 0 ? "#dc2626" : "#64748b";
-    const s = val > 0 ? "+" + Math.round(val) + "%" : val < 0 ? Math.round(val) + "%" : "0%";
-    return `<span style="font-weight:700;font-size:24px;color:${c}">${s}</span>`;
+  // ── Header ──
+  const score = prog.current_score || 0;
+  const sr = stats.success_rate || 0;
+  let html = `
+    <div class="card" style="background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;text-align:center">
+      <div style="font-size:13px;opacity:.8">${childInfo.name || "—"}</div>
+      <div style="font-size:42px;font-weight:800;margin:4px 0">${Math.round(score)}%</div>
+      <div style="font-size:12px;opacity:.8">المعدل الإجمالي</div>
+    </div>`;
+
+  // ── Weekly Change ──
+  const dev = prog.weekly_dev || 0;
+  const devColor = dev > 0 ? "#16a34a" : dev < 0 ? "#dc2626" : "#64748b";
+  const devIcon = dev > 0 ? "⬆" : dev < 0 ? "⬇" : "➡";
+  html += `
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:11px;color:var(--gray)">تطور هذا الأسبوع</div>
+        <div style="font-weight:700;font-size:20px;color:${devColor}">${devIcon} ${dev > 0 ? "+" : ""}${Math.round(dev)}%</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:11px;color:var(--gray)">الأسبوع الماضي</div>
+        <div style="font-weight:700;font-size:16px">${Math.round(prog.last_week||0)}%</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:11px;color:var(--gray)">هذا الأسبوع</div>
+        <div style="font-weight:700;font-size:16px">${Math.round(prog.weekly_rate||0)}%</div>
+      </div>
+    </div>`;
+
+  // ── Performance Summary ──
+  const total = stats.total_sessions || 0;
+  const correct = stats.total_correct || 0;
+  const wrong = stats.total_wrong || 0;
+  const attempts = stats.total_attempts || 0;
+  const bestGame = stats.best_game || "—";
+  html += `
+    <div class="card">
+      <div class="card-title">📊 إحصائيات الأداء</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="stat-box">
+          <div class="stat-val" style="color:var(--p)">${total}</div>
+          <div class="stat-lbl">إجمالي الجلسات</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" style="color:var(--success)">${correct}</div>
+          <div class="stat-lbl">إجابات صحيحة</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" style="color:var(--danger)">${wrong}</div>
+          <div class="stat-lbl">إجابات خاطئة</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" style="color:${sr >= 70 ? "var(--success)" : sr >= 40 ? "var(--warning)" : "var(--danger)"}">${sr}%</div>
+          <div class="stat-lbl">نسبة النجاح</div>
+        </div>
+      </div>
+      ${bestGame !== "—" ? `<div style="margin-top:10px;font-size:13px;color:var(--gray);text-align:center">🏆 أفضل لعبة: <strong>${bestGame}</strong></div>` : ""}
+    </div>`;
+
+  // ── By Game Type ──
+  const typeKeys = Object.keys(byType);
+  if (typeKeys.length > 0) {
+    html += `<div class="card"><div class="card-title">🎮 حسب نوع اللعبة</div>`;
+    typeKeys.forEach(k => {
+      const g = byType[k];
+      const pct = g.total > 0 ? Math.round(100 * g.correct / g.total) : 0;
+      const c = pct >= 70 ? "#16a34a" : pct >= 40 ? "#d97706" : "#dc2626";
+      html += `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9">
+          <div style="flex:1;font-size:13px">${g.label || k}</div>
+          <div style="display:flex;gap:10px;font-size:12px;color:var(--gray)">
+            <span>✅${g.correct}</span>
+            <span>❌${g.wrong}</span>
+            <span>📌${g.sessions}</span>
+          </div>
+          <div style="font-weight:700;font-size:14px;color:${c};min-width:40px;text-align:left">${pct}%</div>
+        </div>`;
+    });
+    html += "</div>";
   }
 
-  let html = `<div style="display:flex;gap:15px;justify-content:center;flex-wrap:wrap;margin-bottom:12px">
-    <div class="card progress-card" style="flex:1;min-width:120px">
-      <div style="font-size:11px;color:var(--gray);font-weight:700">📊 تطور عن الأسبوع الماضي</div>
-      ${devHtml(prog.weekly_dev || 0)}
-    </div>
-    <div class="card progress-card" style="flex:1;min-width:120px">
-      <div style="font-size:11px;color:var(--gray);font-weight:700">📊 المعدل الإجمالي</div>
-      <div style="font-weight:700;font-size:24px;color:${(prog.current_score||0) >= 70 ? "#16a34a" : "#64748b"}">${Math.round(prog.current_score||0)}%</div>
-    </div>
-  </div>`;
-
-  const sr = stats.success_rate || 0;
-  html += `<div class="card" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:space-around">
-    <div style="text-align:center"><div style="font-size:11px;color:var(--gray)">المعدل الإجمالي</div><div style="font-weight:700;color:${sr >= 70 ? "#16a34a" : "#d97706"}">${sr}%</div></div>
-    <div style="text-align:center"><div style="font-size:11px;color:var(--gray)">هذا الأسبوع</div><div style="font-weight:700">${Math.round(prog.weekly_rate||0)}%</div></div>
-    <div style="text-align:center"><div style="font-size:11px;color:var(--gray)">الأسبوع الماضي</div><div style="font-weight:700">${Math.round(prog.last_week||0)}%</div></div>
-    <div style="text-align:center"><div style="font-size:11px;color:var(--gray)">جلسات</div><div style="font-weight:700">${stats.total_sessions||0}</div></div>
-  </div>`;
-
-  // آخر الجلسات
+  // ── Last Sessions ──
   html += `<div class="card"><div class="card-title">🕐 آخر الجلسات</div>`;
   if (!sessions || sessions.length === 0) {
     html += "<div style='font-size:13px;color:var(--gray);text-align:center;padding:10px'>لا توجد جلسات بعد</div>";
   } else {
     sessions.slice(0, 10).forEach(s => {
       const sc = s.pct >= 70 ? "#16a34a" : s.pct >= 40 ? "#d97706" : "#dc2626";
-      html += `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:12px">
-        <span>${s.game_label || s.game_type}</span>
-        <span style="font-weight:600;color:${sc}">✅${s.correct} ❌${s.wrong}  ${Math.round(s.pct)}%</span>
-      </div>`;
+      html += `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9">
+          <div>
+            <div style="font-size:13px;font-weight:500">${s.game_label || s.game_type}</div>
+            <div style="font-size:10px;color:var(--gray)">${s.played_at ? fmtDate(new Date(s.played_at)) : ""}</div>
+          </div>
+          <div style="text-align:left">
+            <div style="font-weight:700;font-size:16px;color:${sc}">${Math.round(s.pct)}%</div>
+            <div style="font-size:11px;color:var(--gray)">✅${s.correct} ❌${s.wrong}</div>
+          </div>
+        </div>`;
     });
   }
   html += "</div>";
