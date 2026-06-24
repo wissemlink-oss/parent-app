@@ -233,20 +233,26 @@ function doLogin() {
   currentParentId = pid;
   connectMQTT(pid);
 
-  // نستنى شوية نشوف إذا وصلت بيانات
-  setTimeout(() => {
-    loader.style.display = "none";
+  // نستنى البيانات (تصل خلال 1-5 ثواني)
+  let waited = 0;
+  const maxWait = 15;
+  const iv = setInterval(() => {
+    waited++;
     if (childInfo && childInfo.name) {
+      clearInterval(iv);
+      loader.style.display = "none";
       if (document.getElementById("save-pid").checked)
         localStorage.setItem("parent_id", pid);
       showApp();
-    } else {
+    } else if (waited >= maxWait) {
+      clearInterval(iv);
+      loader.style.display = "none";
       err.textContent = "رمز الدخول غير صحيح";
       err.style.display = "block";
       currentParentId = "";
       if (mqttClient) { mqttClient.end(); mqttClient = null; }
     }
-  }, 3000);
+  }, 1000);
 }
 
 function doLogout() {
