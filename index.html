@@ -142,6 +142,7 @@ const MQTT_CONFIG = {
 
 let mqttClient = null;
 let currentParentId = "";
+let mqttConnected = false;
 let childInfo = {};
 let childProgress = {};
 let childMessages = [];
@@ -171,6 +172,7 @@ function connectMQTT(parentId) {
     });
 
     mqttClient.on("connect", () => {
+      mqttConnected = true;
       document.getElementById("offline-badge").style.display = "none";
       const topic = MQTT_CONFIG.topicPrefix + "/parent/" + parentId + "/#";
       mqttClient.subscribe(topic, {qos:1});
@@ -242,9 +244,10 @@ function doLogin() {
     } else if (waited >= maxWait) {
       clearInterval(iv);
       loader.style.display = "none";
-      err.textContent = "رمز الدخول غير صحيح";
+      err.textContent = mqttConnected ? "رمز الدخول غير صحيح" : "تعذر الاتصال بالخادم، تحقق من اتصالك بالإنترنت";
       err.style.display = "block";
       currentParentId = "";
+      mqttConnected = false;
       if (mqttClient) { mqttClient.end(); mqttClient = null; }
     }
   }, 1000);
@@ -252,6 +255,7 @@ function doLogin() {
 
 function doLogout() {
   currentParentId = "";
+  mqttConnected = false;
   childInfo = {}; childProgress = {}; childMessages = []; childReminders = [];
   childStats = {}; childSessions = [];
   if (mqttClient) { mqttClient.end(); mqttClient = null; }
