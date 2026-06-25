@@ -469,28 +469,41 @@ function renderProgress() {
     </table>
   </div>`;
 
-  // ── By category (الفئات حسب المجال) ──
-  const byType = Array.isArray(stats.by_type) ? stats.by_type : [];
-  if (byType.length > 0) {
+  function catRow(label, r) {
+    const avg = Math.round(r.rate||0);
+    const best = Math.round(r.best||0);
+    const lw = r.last_week > 0 ? Math.round(r.last_week) + "%" : "—";
+    const tw = r.this_week > 0 ? Math.round(r.this_week) : null;
+    const d = r.dev || 0;
+    const twStr = tw != null ? `<span style="color:${tw >= 70 ? '#16a34a' : tw >= 40 ? '#d97706' : '#dc2626'}"><strong>${tw}%</strong></span>` : "<span style='color:#d97706'>—</span>";
+    const dStr = d > 0 ? `<span style="color:#16a34a">↑ +${Math.round(d)}%</span>` : d < 0 ? `<span style="color:#dc2626">↓ ${Math.round(d)}%</span>` : "<span style='color:#64748b'>➡ 0%</span>";
+    return `<tr><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">${label}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center"><strong>${avg}%</strong></td>
+      <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${best}%</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${lw}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${twStr}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${dStr}</td></tr>`;
+  }
+  const domainMap = {"Cognitif":"🧠 المعرفي","Physique":"🤚 الحركي","Social":"👥 الاجتماعي"};
+  const cats = stats.categories || {};
+  const catKeys = Object.keys(cats).filter(k => cats[k]);
+  if (catKeys.length > 0) {
     html += `<div class="card">
       <div style="color:#1e293b;margin-top:0;border-right:4px solid #2563eb;padding-right:10px;font-weight:700;font-size:14px;margin-bottom:10px">📊 الفئات حسب المجال</div>
       <table style="width:100%;border-collapse:collapse;font-size:12px">
         <tr><th style="padding:8px 8px;text-align:right;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">المجال</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">المعدل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">الأفضل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">الأسبوع الماضي</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">هذا الأسبوع</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">التطور</th></tr>`;
-    byType.forEach(g => {
-      const avg = Math.round(g.avg_pct||0);
-      const best = Math.round(g.best_pct||0);
-      const lw = Math.round(g.last_week_pct||0);
-      const tw = g.this_week_pct != null ? Math.round(g.this_week_pct) : null;
-      const d = g.dev != null ? Math.round(g.dev) : null;
-      const twStr = tw != null ? `<span style="color:${tw >= 70 ? '#16a34a' : tw >= 40 ? '#d97706' : '#dc2626'}"><strong>${tw}%</strong></span>` : "<span style='color:#d97706'>—</span>";
-      const dStr = d != null ? (d > 0 ? `<span style="color:#16a34a">↑ +${d}%</span>` : `<span style="color:#dc2626">↓ ${d}%</span>`) : "<span style='color:#dc2626'>—</span>";
-      html += `<tr><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">${g.game_label || g.game_type || "—"}</td>
-        <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center"><strong>${avg}%</strong></td>
-        <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${best}%</td>
-        <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${lw}%</td>
-        <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${twStr}</td>
-        <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${dStr}</td></tr>`;
-    });
+    catKeys.forEach(k => html += catRow(domainMap[k] || k, cats[k]));
+    html += "</table></div>";
+  }
+  const tagMap = {"مطابقة":"🔍 مطابقة","رياضيات":"📦 رياضيات","تركيب و ترتيب":"🎨 تركيب و ترتيب","تصنيف":"🏷️ تصنيف","إدراك الفضاء":"🧩 إدراك الفضاء"};
+  const tags = stats.tags || {};
+  const tagKeys = Object.keys(tags).filter(k => tags[k]);
+  if (tagKeys.length > 0) {
+    html += `<div class="card">
+      <div style="color:#1e293b;margin-top:0;border-right:4px solid #2563eb;padding-right:10px;font-weight:700;font-size:14px;margin-bottom:10px">🎮 الأداء حسب التصنيف</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <tr><th style="padding:8px 8px;text-align:right;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">التصنيف</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">المعدل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">الأفضل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">الأسبوع الماضي</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">هذا الأسبوع</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">التطور</th></tr>`;
+    tagKeys.forEach(k => html += catRow(tagMap[k] || k, tags[k]));
     html += "</table></div>";
   }
 
