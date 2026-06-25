@@ -231,15 +231,16 @@ function renderCurrentTab() {
 let loginTimer = null;
 function doLogin() {
   const pid = document.getElementById("pid-input").value.trim();
-  if (!pid || loginTimer) return;
+  if (!pid) return;
+  // نحيد أي محاولة قديمة
+  if (loginTimer) { clearInterval(loginTimer); loginTimer = null; }
+  if (mqttClient) { mqttClient.end(true); mqttClient = null; }
+  mqttConnected = false;
+  currentParentId = "";
   const err = document.getElementById("login-error");
   const loader = document.getElementById("login-loader");
   err.style.display = "none";
   loader.style.display = "block";
-
-  // نقطع أي اتصال قديم
-  if (mqttClient) { mqttClient.end(true); mqttClient = null; }
-  mqttConnected = false;
 
   // نتصل بـ MQTT ونشترك في topic الطفل
   currentParentId = pid;
