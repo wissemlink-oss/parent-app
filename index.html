@@ -146,6 +146,12 @@ const MQTT_CONFIG = {
   topicPrefix: "child",
 };
 
+// تحقق من تحميل مكتبة MQTT
+if (typeof mqtt === "undefined") {
+  document.getElementById("login-error").textContent = "⚠️ فشل تحميل المكتبة، تحقق من اتصالك بالإنترنت";
+  document.getElementById("login-error").style.display = "block";
+}
+
 let mqttClient = null;
 let currentParentId = "";
 let mqttConnected = false;
