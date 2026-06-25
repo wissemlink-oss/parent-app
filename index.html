@@ -357,7 +357,7 @@ function renderDashboard() {
   // التذكيرات القادمة
   html += `<div class="card"><div class="card-title">⏰ التذكيرات القادمة</div>`;
   const pendRems = (childReminders || []).filter(r => !r.completed).slice(0, 3);
-  if (pendRems.length === 0) html += "<div style='font-size:13px;color:var(--gray)">لا توجد تذكيرات معلقة</div>";
+  if (pendRems.length === 0) html += "<div style='font-size:13px;color:var(--gray)'>لا توجد تذكيرات معلقة</div>";
   else pendRems.forEach(r => {
     html += `<div class="msg-item">
       <div class="title"><span>${r.message}</span><span class="date">${r.reminder_dt}</span></div>
