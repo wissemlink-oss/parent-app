@@ -235,6 +235,8 @@ function renderCurrentTab() {
 
 // ─── Login / Logout ───
 function doLogin() {
+  document.getElementById("login-error").textContent = "جاري الاتصال...";
+  document.getElementById("login-error").style.display = "block";
   const pid = document.getElementById("pid-input").value.trim();
   if (!pid) return;
   const err = document.getElementById("login-error");
