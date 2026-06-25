@@ -503,6 +503,28 @@ function renderProgress() {
     html += "</div>";
   }
 
+  // ── Chart ──
+  const chartSessions = (sessions || []).slice(0, 14).reverse();
+  if (chartSessions.length > 0) {
+    const barW = Math.max(14, Math.min(30, Math.floor(280 / chartSessions.length)));
+    let bars = "", labels = "";
+    chartSessions.forEach(s => {
+      const pct = Math.round(s.pct || 0);
+      const h = Math.max(3, pct * 1.2);
+      const c = pct >= 70 ? "#16a34a" : pct >= 40 ? "#d97706" : "#dc2626";
+      bars += `<rect x="${chartSessions.indexOf(s) * (barW + 4) + 4}" y="${120 - h}" width="${barW}" height="${h}" rx="3" fill="${c}" opacity=".85"/>`;
+      labels += `<text x="${chartSessions.indexOf(s) * (barW + 4) + 4 + barW / 2}" y="134" font-size="7" text-anchor="middle" fill="#94a3b8">${pct}</text>`;
+    });
+    html += `
+      <div class="card">
+        <div class="card-title">📈 تطور الجلسات (آخر ${chartSessions.length})</div>
+        <svg viewBox="0 0 300 140" style="width:100%;max-height:160px">
+          ${bars}
+          ${labels}
+        </svg>
+      </div>`;
+  }
+
   // ── Last Sessions ──
   html += `<div class="card"><div class="card-title">🕐 آخر الجلسات</div>`;
   if (!sessions || sessions.length === 0) {
