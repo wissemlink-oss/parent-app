@@ -306,12 +306,11 @@ function switchTab(name) {
 function renderDashboard() {
   const el = document.getElementById("tab-dashboard");
   const score = childProgress.current_score || 0;
+  const weekly = childProgress.weekly_rate || 0;
   const deg = Math.round((score / 100) * 360);
   const color = score >= 70 ? "#16a34a" : score >= 40 ? "#d97706" : "#dc2626";
-  const changeText = childProgress.weekly_dev
-    ? (childProgress.weekly_dev > 0 ? "⬆ " + Math.round(childProgress.weekly_dev) + "% هذا الأسبوع" :
-       childProgress.weekly_dev < 0 ? "⬇ " + Math.abs(Math.round(childProgress.weekly_dev)) + "% هذا الأسبوع" : "— مستقر")
-    : "";
+  const changeIcon = childProgress.weekly_dev > 0 ? "⬆" : childProgress.weekly_dev < 0 ? "⬇" : "➡";
+  const dev = childProgress.weekly_dev || 0;
 
   let html = `
     <div class="card">
@@ -321,10 +320,15 @@ function renderDashboard() {
         </div>
         <div class="p-info">
           <h4>${childInfo.name || "—"}</h4>
-          <div class="sub">📊 آخر تحديث: ${fmtDate(new Date())}</div>
-          ${changeText ? "<div class='change " + (childProgress.weekly_dev > 0 ? "up" : "down") + "'>" + changeText + "</div>" : ""}
+          <div class="sub" style="margin-top:4px">${childInfo.age || "—"} سنة</div>
+          <div class="change ${dev > 0 ? 'up' : dev < 0 ? 'down' : ''}" style="margin-top:6px">${changeIcon} ${dev ? Math.abs(Math.round(dev)) + '%' : '—'} هذا الأسبوع</div>
         </div>
       </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+      <div class="card" style="text-align:center;padding:10px"><div style="font-size:22px;font-weight:800;color:var(--p)">${childStats.total_sessions||0}</div><div style="font-size:10px;color:var(--gray)">جلسات</div></div>
+      <div class="card" style="text-align:center;padding:10px"><div style="font-size:22px;font-weight:800;color:var(--success)">${Math.round(childStats.success_rate||0)}%</div><div style="font-size:10px;color:var(--gray)">نسبة النجاح</div></div>
+      <div class="card" style="text-align:center;padding:10px"><div style="font-size:22px;font-weight:800;color:${weekly >= 70 ? 'var(--success)' : 'var(--warning)'}">${Math.round(weekly)}%</div><div style="font-size:10px;color:var(--gray)">هذا الأسبوع</div></div>
     </div>`;
 
   // آخر الرسائل
