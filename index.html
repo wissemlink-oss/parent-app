@@ -66,9 +66,7 @@ body{font-family:-apple-system,'Segoe UI','Noto Naskh Arabic',sans-serif;backgro
 .rem-item .top{display:flex;justify-content:space-between;align-items:center}
 .rem-item .date{font-size:11px;color:var(--gray);margin-top:4px}
 .rem-item .note{font-size:12px;color:var(--gray);margin-top:4px;line-height:1.5}
-.stat-box{background:#f8fafc;border-radius:10px;padding:12px;text-align:center}
-.stat-val{font-size:28px;font-weight:800;line-height:1.2}
-.stat-lbl{font-size:11px;color:var(--gray);margin-top:2px}
+
 .status-tag{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600}
 .st-pending{background:#fef3c7;color:var(--warning)}
 .st-done{background:#dcfce7;color:var(--success)}
@@ -420,64 +418,98 @@ function renderReminders() {
   el.innerHTML = html;
 }
 
-// ─── Progress (مثل التقرير) ───
+// ─── Progress (نسخة التقرير بالضبط) ───
 function renderProgress() {
   const el = document.getElementById("tab-progress");
   const stats = childStats || {};
   const sessions = childSessions || [];
   const prog = childProgress || {};
 
-  const score = prog.current_score || 0;
   const dev = prog.weekly_dev || 0;
+  const score = prog.current_score || 0;
   const devColor = dev > 0 ? "#16a34a" : dev < 0 ? "#dc2626" : "#64748b";
+  const scoreColor = dev > 0 ? "#16a34a" : "#dc2626";
 
-  let html = `
-    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:12px">
-      <div style="background:#f1f5f9;padding:10px 16px;border-radius:8px;min-width:100px;text-align:center">
-        <div style="font-size:11px;color:var(--gray)">📊 تطور عن الأسبوع الماضي</div>
-        <div style="font-size:32px;font-weight:800;color:${devColor}">${dev > 0 ? "+" : ""}${Math.round(dev)}%</div>
+  let html = `<div class="card" style="border:1px solid #e2e8f0;background:#f8fafc;text-align:center;padding:16px">
+    <div style="display:flex;gap:30px;justify-content:center;flex-wrap:wrap">
+      <div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:5px">📊 تطور عن الأسبوع الماضي</div>
+        <div style="font-size:42px;font-weight:bold;color:${devColor}">${dev > 0 ? "+" : ""}${Math.round(dev)}%</div>
       </div>
-      <div style="background:#f1f5f9;padding:10px 16px;border-radius:8px;min-width:100px;text-align:center">
-        <div style="font-size:11px;color:var(--gray)">📊 التطور الإجمالي</div>
-        <div style="font-size:32px;font-weight:800;color:${score >= 70 ? "#16a34a" : "#d97706"}">${Math.round(score)}%</div>
+      <div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:5px">📊 التطور الإجمالي</div>
+        <div style="font-size:42px;font-weight:bold;color:${scoreColor}">${dev > 0 ? "+" : ""}${Math.round(score)}%</div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px">
-      <div style="background:#f0fdf4;padding:8px 14px;border-radius:8px;min-width:80px;text-align:center;border:1px solid #bbf7d0">
-        <div style="font-size:20px;font-weight:700;color:#16a34a">${Math.round(stats.success_rate||0)}%</div>
-        <div style="font-size:10px;font-weight:600;color:#15803d">المعدل الإجمالي</div>
+    <div style="display:flex;gap:15px;justify-content:center;flex-wrap:wrap;margin-top:18px">
+      <div style="background:#e8f5e9;padding:10px 16px;border-radius:8px;min-width:100px;border:1px solid #c8e6c9">
+        <div style="font-size:22px;font-weight:bold;color:#16a34a">${Math.round(stats.success_rate||0)}%</div>
+        <div style="font-size:11px;font-weight:bold;color:#2e7d32">المعدل الإجمالي</div>
       </div>
-      <div style="background:#fff7ed;padding:8px 14px;border-radius:8px;min-width:80px;text-align:center;border:1px solid #fed7aa">
-        <div style="font-size:20px;font-weight:700;color:#d97706">${Math.round(prog.weekly_rate||0)}%</div>
-        <div style="font-size:10px;font-weight:600;color:#c2410c">هذا الأسبوع</div>
+      <div style="background:#fff3e0;padding:10px 16px;border-radius:8px;min-width:100px;border:1px solid #ffe0b2">
+        <div style="font-size:22px;font-weight:bold;color:#d97706">${Math.round(prog.weekly_rate||0)}%</div>
+        <div style="font-size:11px;font-weight:bold;color:#e65100">هذا الأسبوع</div>
       </div>
-      <div style="background:#f8fafc;padding:8px 14px;border-radius:8px;min-width:80px;text-align:center;border:1px solid #e2e8f0">
-        <div style="font-size:20px;font-weight:700;color:#64748b">${Math.round(prog.last_week||0)}%</div>
-        <div style="font-size:10px;font-weight:600;color:#475569">الأسبوع الماضي</div>
+      <div style="background:#f1f5f9;padding:10px 16px;border-radius:8px;min-width:100px;border:1px solid #e2e8f0">
+        <div style="font-size:22px;font-weight:bold;color:#64748b">${Math.round(prog.last_week||0)}%</div>
+        <div style="font-size:11px;font-weight:bold;color:#475569">الأسبوع الماضي</div>
       </div>
-    </div>`;
+    </div>
+  </div>`;
 
   // ── Stats table ──
-  html += `
-    <div class="card"><div class="card-title">📈 إحصائيات الأداء العام</div>
+  html += `<div class="card">
+    <div style="color:#1e293b;margin-top:0;border-right:4px solid #2563eb;padding-right:10px;font-weight:700;font-size:14px;margin-bottom:10px">📈 إحصائيات الأداء العام</div>
     <table style="width:100%;border-collapse:collapse;font-size:13px">
-      <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0">عدد الجلسات الكلي</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;text-align:left;font-weight:700">${stats.total_sessions||0}</td></tr>
-      <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0">الإجابات الصحيحة</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;text-align:left"><span style="background:#16a34a;color:#fff;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700">${stats.total_correct||0}</span></td></tr>
-      <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0">الإجابات الخاطئة</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;text-align:left"><span style="background:#dc2626;color:#fff;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700">${stats.total_wrong||0}</span></td></tr>
-      <tr><td style="padding:8px 0">معدل النجاح</td><td style="padding:8px 0;text-align:left;font-weight:700">${(stats.success_rate||0).toFixed(1)}%</td></tr>
-    </table></div>`;
+      <tr><th style="padding:8px 0;text-align:right;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9;padding:8px 12px">المقياس</th><th style="padding:8px 0;text-align:right;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9;padding:8px 12px">القيمة</th></tr>
+      <tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0">عدد الجلسات الكلي</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0"><strong>${stats.total_sessions||0}</strong></td></tr>
+      <tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0">الإجابات الصحيحة</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0"><span style="display:inline-block;padding:4px 10px;border-radius:9999px;color:#fff;font-size:12px;font-weight:bold;background-color:#16a34a">${stats.total_correct||0}</span></td></tr>
+      <tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0">الإجابات الخاطئة</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0"><span style="display:inline-block;padding:4px 10px;border-radius:9999px;color:#fff;font-size:12px;font-weight:bold;background-color:#dc2626">${stats.total_wrong||0}</span></td></tr>
+      <tr><td style="padding:8px 12px">معدل النجاح</td><td style="padding:8px 12px"><strong>${(stats.success_rate||0).toFixed(1)}%</strong></td></tr>
+    </table>
+  </div>`;
+
+  // ── By category (الفئات حسب المجال) ──
+  const byType = Array.isArray(stats.by_type) ? stats.by_type : [];
+  if (byType.length > 0) {
+    html += `<div class="card">
+      <div style="color:#1e293b;margin-top:0;border-right:4px solid #2563eb;padding-right:10px;font-weight:700;font-size:14px;margin-bottom:10px">📊 الفئات حسب المجال</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <tr><th style="padding:8px 8px;text-align:right;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">المجال</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">المعدل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">الأفضل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">الأسبوع الماضي</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">هذا الأسبوع</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">التطور</th></tr>`;
+    byType.forEach(g => {
+      const avg = Math.round(g.avg_pct||0);
+      const best = Math.round(g.best_pct||0);
+      const lw = Math.round(g.last_week_pct||0);
+      const tw = g.this_week_pct != null ? Math.round(g.this_week_pct) : null;
+      const d = g.dev != null ? Math.round(g.dev) : null;
+      const twStr = tw != null ? `<span style="color:${tw >= 70 ? '#16a34a' : tw >= 40 ? '#d97706' : '#dc2626'}"><strong>${tw}%</strong></span>` : "<span style='color:#d97706'>—</span>";
+      const dStr = d != null ? (d > 0 ? `<span style="color:#16a34a">↑ +${d}%</span>` : `<span style="color:#dc2626">↓ ${d}%</span>`) : "<span style='color:#dc2626'>—</span>";
+      html += `<tr><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">${g.game_label || g.game_type || "—"}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center"><strong>${avg}%</strong></td>
+        <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${best}%</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${lw}%</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${twStr}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${dStr}</td></tr>`;
+    });
+    html += "</table></div>";
+  }
 
   // ── Last Sessions ──
-  html += `<div class="card"><div class="card-title">🕐 آخر الجلسات</div>`;
+  html += `<div class="card">
+    <div style="color:#1e293b;margin-top:0;border-right:4px solid #2563eb;padding-right:10px;font-weight:700;font-size:14px;margin-bottom:10px">🕐 آخر الجلسات (آخر 10 جلسات)</div>`;
   if (!sessions || sessions.length === 0) {
     html += "<div style='font-size:13px;color:var(--gray);text-align:center;padding:10px'>لا توجد جلسات بعد</div>";
   } else {
     html += `<table style="width:100%;border-collapse:collapse;font-size:12px">
-      <tr><th style="padding:8px 0;text-align:right;color:var(--gray);font-weight:600">اللعبة</th><th style="padding:8px 0;text-align:center;color:var(--gray);font-weight:600">النتيجة</th></tr>`;
+      <tr><th style="padding:8px 8px;text-align:right;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">اللعبة</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">صحيح</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">خطأ</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">النتيجة</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">التاريخ</th></tr>`;
     sessions.slice(0, 10).forEach(s => {
       const sc = s.pct >= 70 ? "#16a34a" : s.pct >= 40 ? "#d97706" : "#dc2626";
-      html += `<tr><td style="padding:6px 0;border-bottom:1px solid #f1f5f9">${s.game_label || s.game_type}</td>
-        <td style="padding:6px 0;border-bottom:1px solid #f1f5f9;text-align:center"><span style="font-weight:700;color:${sc}">${Math.round(s.pct)}%</span> ✅${s.correct} ❌${s.wrong}</td></tr>`;
+      const date = s.played_at ? new Date(s.played_at).toLocaleDateString("ar-TN") : "";
+      html += `<tr><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">${s.game_label || s.game_type || "—"}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${s.correct||0}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${s.wrong||0}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center;font-weight:700;color:${sc}">${Math.round(s.pct)}%</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:var(--gray)">${date}</td></tr>`;
     });
     html += "</table>";
   }
