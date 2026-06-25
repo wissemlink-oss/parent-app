@@ -306,23 +306,40 @@ function renderDashboard() {
   const score = childProgress.current_score || 0;
   const deg = Math.round((score / 100) * 360);
   const color = score >= 70 ? "#16a34a" : score >= 40 ? "#d97706" : "#dc2626";
-  const changeText = childProgress.weekly_dev
-    ? (childProgress.weekly_dev > 0 ? "⬆ " + Math.round(childProgress.weekly_dev) + "% هذا الأسبوع" :
-       childProgress.weekly_dev < 0 ? "⬇ " + Math.abs(Math.round(childProgress.weekly_dev)) + "% هذا الأسبوع" : "— مستقر")
-    : "";
+  const dev = childProgress.weekly_dev || 0;
 
   let html = `
     <div class="card">
-      <div class="progress-row">
-        <div class="p-circle" style="background:conic-gradient(${color} 0deg ${deg}deg,#e2e8f0 ${deg}deg 360deg)">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="p-circle" style="background:conic-gradient(${color} 0deg ${deg}deg,#e2e8f0 ${deg}deg 360deg);flex-shrink:0">
           <div class="inner">${Math.round(score)}%</div>
         </div>
-        <div class="p-info">
-          <h4>${childInfo.name || "—"}</h4>
-          <div class="sub">📊 آخر تحديث: ${fmtDate(new Date())}</div>
-          ${changeText ? "<div class='change " + (childProgress.weekly_dev > 0 ? "up" : "down") + "'>" + changeText + "</div>" : ""}
+        <div style="flex:1">
+          <div style="font-size:18px;font-weight:700">${childInfo.name || "—"}</div>
+          <div style="margin-top:8px;font-size:13px;color:var(--gray);line-height:1.8">
+            <div>العمر البيولوجي: ${childInfo.age || "—"} سنة</div>
+            <div>العمر الذهني: ${childInfo.mental_age || "—"} سنة</div>
+            <div>الفرع: ${childInfo.branch || "—"}</div>
+            <div>القسم: ${childInfo.class_name || "—"}</div>
+            <div>التشخيص: ${childInfo.diagnosis || "—"}</div>
+            <div>درجة الإعاقة: ${childInfo.disability_degree || "—"}</div>
+            ${childInfo.notes ? '<div style="margin-top:4px;font-size:12px;color:#94a3b8">📝 ' + childInfo.notes + '</div>' : ""}
+          </div>
+          <div style="margin-top:6px">
+            <span style="background:#f1f5f9;padding:2px 10px;border-radius:999px;font-size:11px;color:var(--gray)">${dev > 0 ? "⬆ +" : dev < 0 ? "⬇ " : "➡ "}${dev ? Math.abs(Math.round(dev)) + "%" : "—"} هذا الأسبوع</span>
+          </div>
         </div>
       </div>
+    </div>
+    <div class="card">
+      <div style="color:#1e293b;margin-top:0;border-right:4px solid #2563eb;padding-right:10px;font-weight:700;font-size:14px;margin-bottom:10px">📈 إحصائيات الأداء العام</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <tr><th style="padding:6px 8px;text-align:right;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">المقياس</th><th style="padding:6px 8px;text-align:right;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">القيمة</th></tr>
+        <tr><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0">عدد الجلسات الكلي</td><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0"><strong>${childStats.total_sessions||0}</strong></td></tr>
+        <tr><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0">الإجابات الصحيحة</td><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0"><span style="display:inline-block;padding:2px 8px;border-radius:9999px;color:#fff;font-size:11px;font-weight:bold;background-color:#16a34a">${childStats.total_correct||0}</span></td></tr>
+        <tr><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0">الإجابات الخاطئة</td><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0"><span style="display:inline-block;padding:2px 8px;border-radius:9999px;color:#fff;font-size:11px;font-weight:bold;background-color:#dc2626">${childStats.total_wrong||0}</span></td></tr>
+        <tr><td style="padding:6px 8px">معدل النجاح</td><td style="padding:6px 8px"><strong>${(childStats.success_rate||0).toFixed(1)}%</strong></td></tr>
+      </table>
     </div>`;
 
   // آخر الرسائل
@@ -341,7 +358,7 @@ function renderDashboard() {
   // التذكيرات القادمة
   html += `<div class="card"><div class="card-title">⏰ التذكيرات القادمة</div>`;
   const pendRems = (childReminders || []).filter(r => !r.completed).slice(0, 3);
-  if (pendRems.length === 0) html += "<div style='font-size:13px;color:var(--gray)'>لا توجد تذكيرات معلقة</div>";
+  if (pendRems.length === 0) html += "<div style='font-size:13px;color:var(--gray)">لا توجد تذكيرات معلقة</div>";
   else pendRems.forEach(r => {
     html += `<div class="msg-item">
       <div class="title"><span>${r.message}</span><span class="date">${r.reminder_dt}</span></div>
