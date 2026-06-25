@@ -165,6 +165,10 @@ function fmtDateTime(d) {
   return AR_DAYS[d.getDay()] + " — " + d.getDate() + " " + AR_MONTHS[d.getMonth()] + " " + h + ":" + m;
 }
 
+// ─── Game Mappings (مثل database.py) ───
+const GAME_CAT = {"memory":"Cognitif","colors":"Cognitif","numbers":"Cognitif","basket_sort":"Cognitif","coloring":"Cognitif","color_matching":"Cognitif","fruits_vegetables":"Cognitif","compare":"Cognitif","name_scramble":"Cognitif","match":"Cognitif","egg_saver":"Physique","puzzle":"Physique","hal9a":"Physique","smile":"Social","quiz_numbers":"Social","quiz_animals":"Social","quiz_colors":"Social"};
+const GAME_TAG = {"memory":"مطابقة","basket_sort":"مطابقة","compare":"مطابقة","match":"مطابقة","fruits_vegetables":"رياضيات","colors":"تركيب و ترتيب","coloring":"تركيب و ترتيب","color_matching":"تركيب و ترتيب","quiz_colors":"تركيب و ترتيب","numbers":"تصنيف","name_scramble":"تصنيف","quiz_numbers":"تصنيف","egg_saver":"إدراك الفضاء","puzzle":"إدراك الفضاء","hal9a":"إدراك الفضاء","smile":"إدراك الفضاء"};
+
 // ─── MQTT Connect ───
 function connectMQTT(parentId) {
   try {
@@ -484,47 +488,57 @@ function renderProgress() {
       <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${twStr}</td>
       <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${dStr}</td></tr>`;
   }
-  const domainMap = {"Cognitif":"🧠 المعرفي","Physique":"🤚 الحركي","Social":"👥 الاجتماعي"};
-  const cats = stats.categories || {};
-  const catKeys = Object.keys(cats).filter(k => cats[k]);
-  if (catKeys.length > 0) {
+  // compute categories/tags from by_type using GAME_CAT/GAME_TAG mappings
+  function groupByType(mapping, groups) {
+    const byType = Array.isArray(stats.by_type) ? stats.by_type : [];
+    const result = {}, totals = {};
+    groups.forEach(g => { result[g] = [];
+      totals[g] = {correct:0,total:0,best:0,count:0}; });
+    byType.forEach(item => {
+      const g = mapping[item.game_type];
+      if (!g || !result[g]) return;
+      result[g].push(item);
+      totals[g].correct += item.n * item.avg_pct;
+      totals[g].total += item.n;
+      totals[g].best = Math.max(totals[g].best, item.best||0);
+      totals[g].count++;
+    });
+    const out = {};
+    groups.forEach(g => {
+      if (totals[g].total === 0) return;
+      out[g] = {
+        rate: Math.round(totals[g].correct / totals[g].total),
+        best: Math.round(totals[g].best),
+        last_week: 0, this_week: 0, dev: 0
+      };
+    });
+    return out;
+  }
+  const domainGroups = ["Cognitif","Physique","Social"];
+  const catKeys = Object.keys(stats.categories||{}).filter(k => stats.categories[k]);
+  const cats = catKeys.length > 0 ? stats.categories : groupByType(GAME_CAT, domainGroups);
+  const computedCats = Object.keys(cats).filter(k => cats[k]);
+  if (computedCats.length > 0) {
     html += `<div class="card">
       <div style="color:#1e293b;margin-top:0;border-right:4px solid #2563eb;padding-right:10px;font-weight:700;font-size:14px;margin-bottom:10px">📊 الفئات حسب المجال</div>
       <table style="width:100%;border-collapse:collapse;font-size:12px">
         <tr><th style="padding:8px 8px;text-align:right;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">المجال</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">المعدل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">الأفضل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">الأسبوع الماضي</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">هذا الأسبوع</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">التطور</th></tr>`;
-    catKeys.forEach(k => html += catRow(domainMap[k] || k, cats[k]));
+    const domainMap = {"Cognitif":"🧠 المعرفي","Physique":"🤚 الحركي","Social":"👥 الاجتماعي"};
+    computedCats.forEach(k => html += catRow(domainMap[k] || k, cats[k]));
     html += "</table></div>";
   }
-  const tagMap = {"مطابقة":"🔍 مطابقة","رياضيات":"📦 رياضيات","تركيب و ترتيب":"🎨 تركيب و ترتيب","تصنيف":"🏷️ تصنيف","إدراك الفضاء":"🧩 إدراك الفضاء"};
-  const tags = stats.tags || {};
-  const tagKeys = Object.keys(tags).filter(k => tags[k]);
-  if (tagKeys.length > 0) {
+  const tagGroups = ["مطابقة","رياضيات","تركيب و ترتيب","تصنيف","إدراك الفضاء"];
+  const tagKeys = Object.keys(stats.tags||{}).filter(k => stats.tags[k]);
+  const tags = tagKeys.length > 0 ? stats.tags : groupByType(GAME_TAG, tagGroups);
+  const computedTags = Object.keys(tags).filter(k => tags[k]);
+  if (computedTags.length > 0) {
     html += `<div class="card">
       <div style="color:#1e293b;margin-top:0;border-right:4px solid #2563eb;padding-right:10px;font-weight:700;font-size:14px;margin-bottom:10px">🎮 الأداء حسب التصنيف</div>
       <table style="width:100%;border-collapse:collapse;font-size:12px">
         <tr><th style="padding:8px 8px;text-align:right;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">التصنيف</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">المعدل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">الأفضل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">الأسبوع الماضي</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">هذا الأسبوع</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">التطور</th></tr>`;
-    tagKeys.forEach(k => html += catRow(tagMap[k] || k, tags[k]));
+    const tagMap = {"مطابقة":"🔍 مطابقة","رياضيات":"📦 رياضيات","تركيب و ترتيب":"🎨 تركيب و ترتيب","تصنيف":"🏷️ تصنيف","إدراك الفضاء":"🧩 إدراك الفضاء"};
+    computedTags.forEach(k => html += catRow(tagMap[k] || k, tags[k]));
     html += "</table></div>";
-  }
-  // fallback: use by_type if bridge not updated yet
-  if (catKeys.length === 0 && tagKeys.length === 0) {
-    const byType = Array.isArray(stats.by_type) ? stats.by_type : [];
-    if (byType.length > 0) {
-      html += `<div class="card">
-        <div style="color:#1e293b;margin-top:0;border-right:4px solid #2563eb;padding-right:10px;font-weight:700;font-size:14px;margin-bottom:10px">🎮 حسب نوع اللعبة</div>
-        <table style="width:100%;border-collapse:collapse;font-size:12px">
-          <tr><th style="padding:8px 8px;text-align:right;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">اللعبة</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">المعدل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">الأفضل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">جلسات</th></tr>`;
-      byType.forEach(g => {
-        const pct = Math.round(g.avg_pct || 0);
-        const best = Math.round(g.best || g.best_pct || 0);
-        const n = g.n || g.n_sessions || 0;
-        html += `<tr><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">${g.game_label || g.game_type || "—"}</td>
-          <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center"><strong>${pct}%</strong></td>
-          <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${best}%</td>
-          <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${n}</td></tr>`;
-      });
-      html += "</table></div>";
-    }
   }
 
   // ── Last Sessions ──
