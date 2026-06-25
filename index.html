@@ -242,10 +242,13 @@ function doLogin() {
   err.style.display = "none";
   loader.style.display = "block";
 
+  // نتصل بـ MQTT ونشترك في topic الطفل
   currentParentId = pid;
   connectMQTT(pid);
 
+  // نستنى البيانات (تصل خلال 1-5 ثواني)
   let waited = 0;
+  const maxWait = 30;
   const iv = setInterval(() => {
     waited++;
     if (childInfo && childInfo.name) {
@@ -254,7 +257,7 @@ function doLogin() {
       if (document.getElementById("save-pid").checked)
         localStorage.setItem("parent_id", pid);
       showApp();
-    } else if (waited >= 30) {
+    } else if (waited >= maxWait) {
       clearInterval(iv);
       loader.style.display = "none";
       err.textContent = mqttConnected ? "رمز الدخول غير صحيح أو لم تصل البيانات بعد، حاول مرة أخرى" : "تعذر الاتصال بالخادم، تحقق من اتصالك بالإنترنت";
@@ -268,7 +271,6 @@ function doLogin() {
 
 function doLogout() {
   localStorage.removeItem("parent_id");
-  if (loginTimer) { clearInterval(loginTimer); loginTimer = null; }
   currentParentId = "";
   mqttConnected = false;
   childInfo = {}; childProgress = {}; childMessages = []; childReminders = [];
