@@ -316,6 +316,32 @@ function renderDashboard() {
         <div>درجة الإعاقة: ${childInfo.disability_degree || "—"}</div>
         ${childInfo.notes ? '<div style="margin-top:4px;font-size:12px;color:#94a3b8">📝 ' + childInfo.notes + '</div>' : ""}
       </div>
+    </div>
+    <div class="card" style="border:1px solid #e2e8f0;background:#f8fafc;text-align:center;padding:16px">
+      <div style="display:flex;gap:30px;justify-content:center;flex-wrap:wrap">
+        <div>
+          <div style="font-size:12px;color:#64748b;margin-bottom:5px">📊 تطور عن الأسبوع الماضي</div>
+          <div style="font-size:42px;font-weight:bold;color:${dev > 0 ? '#16a34a' : dev < 0 ? '#dc2626' : '#64748b'}">${dev > 0 ? "+" : ""}${Math.round(dev)}%</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#64748b;margin-bottom:5px">📊 التطور الإجمالي</div>
+          <div style="font-size:42px;font-weight:bold;color:${Math.round((childProgress.weekly_rate||0) - (childProgress.current_score||0)) > 0 ? '#16a34a' : Math.round((childProgress.weekly_rate||0) - (childProgress.current_score||0)) < 0 ? '#dc2626' : '#64748b'}">${Math.round((childProgress.weekly_rate||0) - (childProgress.current_score||0)) > 0 ? "+" : ""}${Math.round((childProgress.weekly_rate||0) - (childProgress.current_score||0))}%</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:15px;justify-content:center;flex-wrap:wrap;margin-top:18px">
+        <div style="background:#e8f5e9;padding:10px 16px;border-radius:8px;min-width:100px;border:1px solid #c8e6c9">
+          <div style="font-size:22px;font-weight:bold;color:#16a34a">${Math.round(childStats.success_rate||0)}%</div>
+          <div style="font-size:11px;font-weight:bold;color:#2e7d32">المعدل الإجمالي</div>
+        </div>
+        <div style="background:#fff3e0;padding:10px 16px;border-radius:8px;min-width:100px;border:1px solid #ffe0b2">
+          <div style="font-size:22px;font-weight:bold;color:#d97706">${Math.round(childProgress.weekly_rate||0)}%</div>
+          <div style="font-size:11px;font-weight:bold;color:#e65100">هذا الأسبوع</div>
+        </div>
+        <div style="background:#f1f5f9;padding:10px 16px;border-radius:8px;min-width:100px;border:1px solid #e2e8f0">
+          <div style="font-size:22px;font-weight:bold;color:#64748b">${Math.round(childProgress.last_week||0)}%</div>
+          <div style="font-size:11px;font-weight:bold;color:#475569">الأسبوع الماضي</div>
+        </div>
+      </div>
     </div>`;
 
   // آخر الرسائل
