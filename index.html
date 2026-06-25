@@ -491,23 +491,29 @@ function renderProgress() {
   // compute categories/tags from by_type using GAME_CAT/GAME_TAG mappings
   function groupByType(mapping, groups) {
     const byType = Array.isArray(stats.by_type) ? stats.by_type : [];
+    const hasCorrect = byType.some(item => item.correct !== undefined);
     const result = {}, totals = {};
-    groups.forEach(g => { result[g] = [];
-      totals[g] = {correct:0,total:0,best:0,count:0}; });
+    groups.forEach(g => { result[g] = []; totals[g] = {correct:0,total:0,best:0,count:0,sumPct:0}; });
     byType.forEach(item => {
       const g = mapping[item.game_type];
       if (!g || !result[g]) return;
       result[g].push(item);
-      totals[g].correct += item.n * item.avg_pct;
-      totals[g].total += item.n;
+      totals[g].correct += hasCorrect ? (item.correct||0) : 0;
+      totals[g].total += hasCorrect ? (item.total||0) : 0;
       totals[g].best = Math.max(totals[g].best, item.best||0);
       totals[g].count++;
+      totals[g].sumPct += item.avg_pct || 0;
     });
     const out = {};
     groups.forEach(g => {
-      if (totals[g].total === 0) return;
+      if (totals[g].count === 0) return;
+      let rate;
+      if (hasCorrect && totals[g].total > 0)
+        rate = Math.round(100 * totals[g].correct / totals[g].total);
+      else
+        rate = Math.round(totals[g].sumPct / totals[g].count);
       out[g] = {
-        rate: Math.round(totals[g].correct / totals[g].total),
+        rate: rate,
         best: Math.round(totals[g].best),
         last_week: 0, this_week: 0, dev: 0
       };
