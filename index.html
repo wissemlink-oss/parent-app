@@ -235,10 +235,16 @@ function renderCurrentTab() {
 
 // ─── Login / Logout ───
 function doLogin() {
-  document.getElementById("login-error").textContent = "جاري الاتصال...";
-  document.getElementById("login-error").style.display = "block";
   const pid = document.getElementById("pid-input").value.trim();
-  if (!pid) return;
+  if (!pid) {
+    document.getElementById("login-error").textContent = "🔑 أدخل رمز الدخول أولاً";
+    document.getElementById("login-error").style.display = "block";
+    return;
+  }
+  const err = document.getElementById("login-error");
+  const loader = document.getElementById("login-loader");
+  err.style.display = "none";
+  loader.style.display = "block";
   const err = document.getElementById("login-error");
   const loader = document.getElementById("login-loader");
   err.style.display = "none";
