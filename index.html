@@ -307,46 +307,79 @@ function renderDashboard() {
   const el = document.getElementById("tab-dashboard");
   const score = childProgress.current_score || 0;
   const weekly = childProgress.weekly_rate || 0;
+  const lastWeek = childProgress.last_week || 0;
   const deg = Math.round((score / 100) * 360);
   const color = score >= 70 ? "#16a34a" : score >= 40 ? "#d97706" : "#dc2626";
-  const changeIcon = childProgress.weekly_dev > 0 ? "⬆" : childProgress.weekly_dev < 0 ? "⬇" : "➡";
   const dev = childProgress.weekly_dev || 0;
+  const lastSessions = (childSessions || []).slice(0, 1);
+  const lastSession = lastSessions.length > 0 ? lastSessions[0] : null;
 
   let html = `
-    <div class="card">
-      <div class="progress-row">
-        <div class="p-circle" style="background:conic-gradient(${color} 0deg ${deg}deg,#e2e8f0 ${deg}deg 360deg)">
-          <div class="inner">${Math.round(score)}%</div>
+    <div class="card" style="background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;border:none">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="p-circle" style="border-color:rgba(255,255,255,.3);background:conic-gradient(rgba(255,255,255,.9) 0deg ${deg}deg,rgba(255,255,255,.2) ${deg}deg 360deg);flex-shrink:0">
+          <div class="inner" style="background:rgba(255,255,255,.15);color:#fff">${Math.round(score)}%</div>
         </div>
-        <div class="p-info">
-          <h4>${childInfo.name || "—"}</h4>
-          <div class="sub" style="margin-top:4px">${childInfo.age || "—"} سنة</div>
-          <div class="change ${dev > 0 ? 'up' : dev < 0 ? 'down' : ''}" style="margin-top:6px">${changeIcon} ${dev ? Math.abs(Math.round(dev)) + '%' : '—'} هذا الأسبوع</div>
+        <div style="flex:1">
+          <div style="font-size:18px;font-weight:700">${childInfo.name || "—"}</div>
+          <div style="font-size:12px;opacity:.8;margin-top:2px">${childInfo.age || "—"} سنة ${childInfo.mental_age ? "| ذهني: " + childInfo.mental_age + " سنة" : ""}</div>
+          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+            <span style="background:rgba(255,255,255,.2);padding:2px 10px;border-radius:999px;font-size:11px">${dev > 0 ? "⬆ +" : dev < 0 ? "⬇ " : "➡ "}${dev ? Math.abs(Math.round(dev)) + "%" : "—"} هذا الأسبوع</span>
+            <span style="background:rgba(255,255,255,.2);padding:2px 10px;border-radius:999px;font-size:11px">🎯 ${Math.round(weekly)}% أسبوعي</span>
+          </div>
         </div>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
-      <div class="card" style="text-align:center;padding:10px"><div style="font-size:22px;font-weight:800;color:var(--p)">${childStats.total_sessions||0}</div><div style="font-size:10px;color:var(--gray)">جلسات</div></div>
-      <div class="card" style="text-align:center;padding:10px"><div style="font-size:22px;font-weight:800;color:var(--success)">${Math.round(childStats.success_rate||0)}%</div><div style="font-size:10px;color:var(--gray)">نسبة النجاح</div></div>
-      <div class="card" style="text-align:center;padding:10px"><div style="font-size:22px;font-weight:800;color:${weekly >= 70 ? 'var(--success)' : 'var(--warning)'}">${Math.round(weekly)}%</div><div style="font-size:10px;color:var(--gray)">هذا الأسبوع</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div class="card" style="text-align:center;padding:12px">
+        <div style="font-size:28px;font-weight:800;color:var(--p)">${childStats.total_sessions||0}</div>
+        <div style="font-size:11px;color:var(--gray)">جلسات</div>
+        <div style="margin-top:4px;background:#e2e8f0;height:4px;border-radius:2px;overflow:hidden"><div style="background:var(--p);height:100%;width:${Math.min(100, (childStats.total_sessions||0) / 2)}%;border-radius:2px"></div></div>
+      </div>
+      <div class="card" style="text-align:center;padding:12px">
+        <div style="font-size:28px;font-weight:800;color:var(--success)">${Math.round(childStats.success_rate||0)}%</div>
+        <div style="font-size:11px;color:var(--gray)">نسبة النجاح</div>
+        <div style="margin-top:4px;background:#e2e8f0;height:4px;border-radius:2px;overflow:hidden"><div style="background:var(--success);height:100%;width:${Math.round(childStats.success_rate||0)}%;border-radius:2px"></div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--gray)">
+        <span>📊 الأسبوع الماضي: <strong>${Math.round(lastWeek)}%</strong></span>
+        <span>📊 هذا الأسبوع: <strong>${Math.round(weekly)}%</strong></span>
+      </div>
+      <div style="margin-top:6px;display:flex;gap:2px;height:20px;align-items:flex-end">
+        <div style="flex:1;height:${Math.round(lastWeek)||1}%;background:#cbd5e1;border-radius:2px;min-height:4px"></div>
+        <div style="flex:1;height:${Math.round(weekly)||1}%;background:${color};border-radius:2px;min-height:4px"></div>
+      </div>
     </div>`;
+
+  // آخر جلسة
+  if (lastSession) {
+    const sc = lastSession.pct >= 70 ? "var(--success)" : lastSession.pct >= 40 ? "var(--warning)" : "var(--danger)";
+    html += `<div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><span style="font-size:13px;font-weight:500">🕐 ${lastSession.game_label || lastSession.game_type}</span></div>
+        <div><span style="font-weight:700;font-size:18px;color:${sc}">${Math.round(lastSession.pct)}%</span> <span style="font-size:11px;color:var(--gray)">✅${lastSession.correct} ❌${lastSession.wrong}</span></div>
+      </div>
+    </div>`;
+  }
 
   // آخر الرسائل
   html += `<div class="card"><div class="card-title">✉️ آخر الرسائل</div>`;
-  const recentMsgs = (childMessages || []).slice(0, 3);
+  const recentMsgs = (childMessages || []).slice(0, 2);
   if (recentMsgs.length === 0) html += "<div style='font-size:13px;color:var(--gray)'>لا توجد رسائل بعد</div>";
   else recentMsgs.forEach(m => {
     const d = new Date(m.sent_at);
     html += `<div class="msg-item">
       <div class="title"><span>${m.subject || "(بدون عنوان)"}</span><span class="date">${fmtDateShort(d)}</span></div>
-      <div class="preview">${m.body.substring(0, 60)}${m.body.length>60?"...":""}</div>
+      <div class="preview">${m.body.substring(0, 50)}${m.body.length>50?"...":""}</div>
     </div>`;
   });
   html += "</div>";
 
   // التذكيرات القادمة
   html += `<div class="card"><div class="card-title">⏰ التذكيرات القادمة</div>`;
-  const pendRems = (childReminders || []).filter(r => !r.completed).slice(0, 3);
+  const pendRems = (childReminders || []).filter(r => !r.completed).slice(0, 2);
   if (pendRems.length === 0) html += "<div style='font-size:13px;color:var(--gray)'>لا توجد تذكيرات معلقة</div>";
   else pendRems.forEach(r => {
     html += `<div class="msg-item">
