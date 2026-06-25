@@ -101,7 +101,7 @@ body{font-family:-apple-system,'Segoe UI','Noto Naskh Arabic',sans-serif;backgro
       </label>
       <div id="login-error" class="login-error"></div>
       <div id="login-loader" class="login-loader"></div>
-      <button id="login-btn" onclick="doLogin()">دخول</button>
+      <button onclick="doLogin()">دخول</button>
       <div class="login-hint" style="color:rgba(255,255,255,.4);font-size:11px;margin-top:30px">
         رمز الدخول مكون من 8 أحرف وأرقام<br>يُعطى لك من المركز
       </div>
@@ -145,12 +145,6 @@ const MQTT_CONFIG = {
   password: "UTAIM2026a",
   topicPrefix: "child",
 };
-
-// تحقق من تحميل مكتبة MQTT
-if (typeof mqtt === "undefined") {
-  document.getElementById("login-error").textContent = "⚠️ فشل تحميل المكتبة، تحقق من اتصالك بالإنترنت";
-  document.getElementById("login-error").style.display = "block";
-}
 
 let mqttClient = null;
 let currentParentId = "";
@@ -236,11 +230,7 @@ function renderCurrentTab() {
 // ─── Login / Logout ───
 function doLogin() {
   const pid = document.getElementById("pid-input").value.trim();
-  if (!pid) {
-    document.getElementById("login-error").textContent = "🔑 أدخل رمز الدخول أولاً";
-    document.getElementById("login-error").style.display = "block";
-    return;
-  }
+  if (!pid) return;
   const err = document.getElementById("login-error");
   const loader = document.getElementById("login-loader");
   err.style.display = "none";
@@ -268,7 +258,7 @@ function doLogin() {
       err.style.display = "block";
       currentParentId = "";
       mqttConnected = false;
-      if (mqttClient) { mqttClient.end(true); mqttClient = null; }
+      if (mqttClient) { mqttClient.end(); mqttClient = null; }
     }
   }, 1000);
 }
@@ -436,7 +426,6 @@ function renderProgress() {
   const stats = childStats || {};
   const sessions = childSessions || [];
   const prog = childProgress || {};
-  const byType = stats.by_type || {};
 
   // ── Header ──
   const score = prog.current_score || 0;
@@ -472,7 +461,6 @@ function renderProgress() {
   const total = stats.total_sessions || 0;
   const correct = stats.total_correct || 0;
   const wrong = stats.total_wrong || 0;
-  const attempts = stats.total_attempts || 0;
   const bestGame = stats.best_game && typeof stats.best_game === "object" ? stats.best_game.game_label : (stats.best_game || "—");
   html += `
     <div class="card">
@@ -526,7 +514,7 @@ function renderProgress() {
         <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9">
           <div>
             <div style="font-size:13px;font-weight:500">${s.game_label || s.game_type}</div>
-            <div style="font-size:10px;color:var(--gray)">${s.played_at ? fmtDate(new Date(s.played_at)) : ""}</div>
+            <div style="font-size:10px;color:var(--gray)">${s.played_at ? new Date(s.played_at).toLocaleDateString("ar-TN") : ""}</div>
           </div>
           <div style="text-align:left">
             <div style="font-weight:700;font-size:16px;color:${sc}">${Math.round(s.pct)}%</div>
@@ -541,15 +529,12 @@ function renderProgress() {
 }
 
 // ─── Auto load saved ID ───
-try {
-  const saved = localStorage.getItem("parent_id");
-  if (saved) {
-    document.getElementById("pid-input").value = saved;
-    document.getElementById("save-pid").checked = true;
-  }
-} catch(e) {}
+const saved = localStorage.getItem("parent_id");
+if (saved) {
+  document.getElementById("pid-input").value = saved;
+  document.getElementById("save-pid").checked = true;
+}
 document.getElementById("pid-input").focus();
-document.getElementById("login-btn").addEventListener("click", doLogin);
 </script>
 </body>
 </html>
