@@ -101,7 +101,7 @@ body{font-family:-apple-system,'Segoe UI','Noto Naskh Arabic',sans-serif;backgro
       </label>
       <div id="login-error" class="login-error"></div>
       <div id="login-loader" class="login-loader"></div>
-      <button onclick="doLogin()">دخول</button>
+      <button id="login-btn" onclick="doLogin()">دخول</button>
       <div class="login-hint" style="color:rgba(255,255,255,.4);font-size:11px;margin-top:30px">
         رمز الدخول مكون من 8 أحرف وأرقام<br>يُعطى لك من المركز
       </div>
@@ -228,37 +228,28 @@ function renderCurrentTab() {
 }
 
 // ─── Login / Logout ───
-let loginTimer = null;
 function doLogin() {
   const pid = document.getElementById("pid-input").value.trim();
   if (!pid) return;
-  // نحيد أي محاولة قديمة
-  if (loginTimer) { clearInterval(loginTimer); loginTimer = null; }
-  if (mqttClient) { mqttClient.end(true); mqttClient = null; }
-  mqttConnected = false;
-  currentParentId = "";
   const err = document.getElementById("login-error");
   const loader = document.getElementById("login-loader");
   err.style.display = "none";
   loader.style.display = "block";
 
-  // نتصل بـ MQTT ونشترك في topic الطفل
   currentParentId = pid;
   connectMQTT(pid);
 
-  // نستنى البيانات (تصل خلال 1-5 ثواني)
   let waited = 0;
-  const maxWait = 30;
-  loginTimer = setInterval(() => {
+  const iv = setInterval(() => {
     waited++;
     if (childInfo && childInfo.name) {
-      clearInterval(loginTimer); loginTimer = null;
+      clearInterval(iv);
       loader.style.display = "none";
       if (document.getElementById("save-pid").checked)
         localStorage.setItem("parent_id", pid);
       showApp();
-    } else if (waited >= maxWait) {
-      clearInterval(loginTimer); loginTimer = null;
+    } else if (waited >= 30) {
+      clearInterval(iv);
       loader.style.display = "none";
       err.textContent = mqttConnected ? "رمز الدخول غير صحيح أو لم تصل البيانات بعد، حاول مرة أخرى" : "تعذر الاتصال بالخادم، تحقق من اتصالك بالإنترنت";
       err.style.display = "block";
@@ -544,6 +535,7 @@ if (saved) {
   document.getElementById("save-pid").checked = true;
 }
 document.getElementById("pid-input").focus();
+document.getElementById("login-btn").addEventListener("click", doLogin);
 </script>
 </body>
 </html>
