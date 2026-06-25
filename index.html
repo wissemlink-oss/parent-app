@@ -113,7 +113,6 @@ body{font-family:-apple-system,'Segoe UI','Noto Naskh Arabic',sans-serif;backgro
         <div class="header-info">
           <h2 id="child-name">—</h2>
         </div>
-        <div class="score-badge" id="score-badge">—</div>
         <button class="logout-btn" onclick="doLogout()">✕</button>
       </div>
       <div class="header-sub" id="tabs">
@@ -283,7 +282,6 @@ function showApp() {
   document.getElementById("app-screen").classList.add("active");
   document.getElementById("av").textContent = childInfo.has_photo ? "📸" : "👤";
   document.getElementById("child-name").textContent = childInfo.name || "—";
-  document.getElementById("score-badge").textContent = (childProgress.current_score || 0) + "%";
   switchTab("dashboard");
 }
 
