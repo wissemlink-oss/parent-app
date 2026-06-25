@@ -545,11 +545,13 @@ function renderProgress() {
 }
 
 // ─── Auto load saved ID ───
-const saved = localStorage.getItem("parent_id");
-if (saved) {
-  document.getElementById("pid-input").value = saved;
-  document.getElementById("save-pid").checked = true;
-}
+try {
+  const saved = localStorage.getItem("parent_id");
+  if (saved) {
+    document.getElementById("pid-input").value = saved;
+    document.getElementById("save-pid").checked = true;
+  }
+} catch(e) {}
 document.getElementById("pid-input").focus();
 document.getElementById("login-btn").addEventListener("click", doLogin);
 </script>
