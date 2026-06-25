@@ -318,11 +318,11 @@ function renderDashboard() {
         </div>
         <div style="flex:1">
           <div style="font-size:18px;font-weight:700">${childInfo.name || "—"}</div>
-          <div style="margin-top:6px;font-size:12px;color:var(--gray)">
-            <div>🧬 العمر البيولوجي: ${childInfo.age || "—"} سنة</div>
-            <div>🧠 العمر الذهني: ${childInfo.mental_age || "—"} سنة</div>
-            <div>🏫 الفرع: ${childInfo.branch || "—"}</div>
-            <div>📚 القسم: ${childInfo.class_name || "—"}</div>
+          <div style="margin-top:8px;font-size:13px;color:var(--gray);line-height:1.8">
+            <div>العمر البيولوجي: ${childInfo.age || "—"} سنة</div>
+            <div>العمر الذهني: ${childInfo.mental_age || "—"} سنة</div>
+            <div>الفرع: ${childInfo.branch || "—"}</div>
+            <div>القسم: ${childInfo.class_name || "—"}</div>
           </div>
           <div style="margin-top:6px">
             <span style="background:#f1f5f9;padding:2px 10px;border-radius:999px;font-size:11px;color:var(--gray)">${dev > 0 ? "⬆ +" : dev < 0 ? "⬇ " : "➡ "}${dev ? Math.abs(Math.round(dev)) + "%" : "—"} هذا الأسبوع</span>
