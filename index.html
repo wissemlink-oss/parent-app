@@ -283,7 +283,6 @@ function showApp() {
   document.getElementById("app-screen").classList.add("active");
   document.getElementById("av").textContent = childInfo.has_photo ? "📸" : "👤";
   document.getElementById("child-name").textContent = childInfo.name || "—";
-  document.getElementById("child-meta").textContent = "";
   document.getElementById("score-badge").textContent = (childProgress.current_score || 0) + "%";
   switchTab("dashboard");
 }
