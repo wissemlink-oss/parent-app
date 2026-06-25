@@ -470,7 +470,7 @@ function renderProgress() {
   </div>`;
 
   function catRow(label, r) {
-    const avg = Math.round(r.rate||0);
+    const avg = Math.round(r.rate!=null ? r.rate : r.avg_pct!=null ? r.avg_pct : 0);
     const best = Math.round(r.best||0);
     const lw = r.last_week > 0 ? Math.round(r.last_week) + "%" : "—";
     const tw = r.this_week > 0 ? Math.round(r.this_week) : null;
@@ -505,6 +505,26 @@ function renderProgress() {
         <tr><th style="padding:8px 8px;text-align:right;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">التصنيف</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">المعدل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">الأفضل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">الأسبوع الماضي</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">هذا الأسبوع</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">التطور</th></tr>`;
     tagKeys.forEach(k => html += catRow(tagMap[k] || k, tags[k]));
     html += "</table></div>";
+  }
+  // fallback: use by_type if bridge not updated yet
+  if (catKeys.length === 0 && tagKeys.length === 0) {
+    const byType = Array.isArray(stats.by_type) ? stats.by_type : [];
+    if (byType.length > 0) {
+      html += `<div class="card">
+        <div style="color:#1e293b;margin-top:0;border-right:4px solid #2563eb;padding-right:10px;font-weight:700;font-size:14px;margin-bottom:10px">🎮 حسب نوع اللعبة</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <tr><th style="padding:8px 8px;text-align:right;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">اللعبة</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">المعدل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">الأفضل</th><th style="padding:8px 8px;text-align:center;border-bottom:1px solid #e2e8f0;color:#334155;background:#f1f5f9">جلسات</th></tr>`;
+      byType.forEach(g => {
+        const pct = Math.round(g.avg_pct || 0);
+        const best = Math.round(g.best || g.best_pct || 0);
+        const n = g.n || g.n_sessions || 0;
+        html += `<tr><td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">${g.game_label || g.game_type || "—"}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center"><strong>${pct}%</strong></td>
+          <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${best}%</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:center">${n}</td></tr>`;
+      });
+      html += "</table></div>";
+    }
   }
 
   // ── Last Sessions ──
