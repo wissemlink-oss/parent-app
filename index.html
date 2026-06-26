@@ -6,6 +6,9 @@
 <meta name="theme-color" content="#667eea">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>تطبيق الأولياء</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-title" content="الأولياء">
+<link rel="apple-touch-icon" href="icons/icon-192x192.png">
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 <style>
 :root{--p:#667eea;--p2:#764ba2;--bg:#f0f2f5;--card:#fff;--text:#0f172a;--gray:#64748b;--light:#e2e8f0;--success:#16a34a;--warning:#d97706;--danger:#dc2626;--new:#2563eb}
@@ -132,16 +135,14 @@ body{font-family:-apple-system,'Segoe UI','Noto Naskh Arabic',sans-serif;backgro
 </div>
 
 <script>
-// ═══════════════════════════════════════════
-//  إعدادات MQTT — غيّرها بعد التسجيل
-// ═══════════════════════════════════════════
-const MQTT_CONFIG = {
-  broker:  "wss://92b691ccb7374ba8ad5ad798326a8bd0.s1.eu.hivemq.cloud:8884/mqtt",
+const API = "";
+const FALLBACK_MQTT_CONFIG = {
+  broker: "92b691ccb7374ba8ad5ad798326a8bd0.s1.eu.hivemq.cloud",
+  wss_port: 8884,
   username: "UTAIM",
   password: "UTAIM2026a",
-  topicPrefix: "child",
+  topic_prefix: "child",
 };
-
 let mqttClient = null;
 let currentParentId = "";
 let mqttConnected = false;
@@ -168,11 +169,12 @@ const GAME_CAT = {"memory":"Cognitif","colors":"Cognitif","numbers":"Cognitif","
 const GAME_TAG = {"memory":"مطابقة","basket_sort":"مطابقة","compare":"مطابقة","match":"مطابقة","fruits_vegetables":"رياضيات","colors":"تركيب و ترتيب","coloring":"تركيب و ترتيب","color_matching":"تركيب و ترتيب","quiz_colors":"تركيب و ترتيب","numbers":"تصنيف","name_scramble":"تصنيف","quiz_numbers":"تصنيف","egg_saver":"إدراك الفضاء","puzzle":"إدراك الفضاء","hal9a":"إدراك الفضاء","smile":"إدراك الفضاء"};
 
 // ─── MQTT Connect ───
-function connectMQTT(parentId) {
+function connectMQTT(parentId, config) {
   try {
-    mqttClient = mqtt.connect(MQTT_CONFIG.broker, {
-      username: MQTT_CONFIG.username,
-      password: MQTT_CONFIG.password,
+    const brokerUrl = "wss://" + config.broker + ":" + config.wss_port + "/mqtt";
+    mqttClient = mqtt.connect(brokerUrl, {
+      username: config.username,
+      password: config.password,
       clientId: "parent_" + parentId + "_" + Math.random().toString(36).substr(2,8),
       clean: true,
       keepalive: 30,
@@ -182,7 +184,7 @@ function connectMQTT(parentId) {
     mqttClient.on("connect", () => {
       mqttConnected = true;
       document.getElementById("offline-badge").style.display = "none";
-      const topic = MQTT_CONFIG.topicPrefix + "/parent/" + parentId + "/#";
+      const topic = config.topic_prefix + "/parent/" + parentId + "/#";
       mqttClient.subscribe(topic, {qos:1});
     });
 
@@ -236,11 +238,38 @@ function doLogin() {
   err.style.display = "none";
   loader.style.display = "block";
 
-  // نتصل بـ MQTT ونشترك في topic الطفل
   currentParentId = pid;
-  connectMQTT(pid);
 
-  // نستنى البيانات (تصل خلال 1-5 ثواني)
+  // 1. نجلب إعدادات MQTT من السيرفر (إن وُجد)
+  fetch(API + "/api/mqtt-config/" + encodeURIComponent(pid))
+    .then(r => {
+      if (!r.ok) throw new Error("رمز الدخول غير صحيح");
+      return r.json();
+    })
+    .then(config => {
+      // 2. نطلب نشر فوري للبيانات عبر MQTT
+      fetch(API + "/api/parent/" + encodeURIComponent(pid) + "/refresh").catch(() => {});
+      connectAndWait(pid, config);
+    })
+    .catch(e => {
+      // السيرفر مش موجود (static hosting) → نستخدم الإعدادات المضمنة
+      if (e.message === "رمز الدخول غير صحيح") {
+        loader.style.display = "none";
+        err.textContent = "رمز الدخول غير صحيح";
+        err.style.display = "block";
+        return;
+      }
+      console.warn("Server unavailable, using fallback config");
+      connectAndWait(pid, FALLBACK_MQTT_CONFIG);
+    });
+}
+
+function connectAndWait(pid, config) {
+  const loader = document.getElementById("login-loader");
+  const err = document.getElementById("login-error");
+
+  connectMQTT(pid, config);
+
   let waited = 0;
   const maxWait = 30;
   const iv = setInterval(() => {
@@ -261,6 +290,7 @@ function doLogin() {
       if (mqttClient) { mqttClient.end(); mqttClient = null; }
     }
   }, 1000);
+}
 }
 
 function doLogout() {
@@ -577,6 +607,13 @@ function renderProgress() {
   html += "</div>";
 
   el.innerHTML = html;
+}
+
+// ─── Service Worker ───
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").then(() => {
+    console.log("SW registered");
+  }).catch(() => {});
 }
 
 // ─── Auto load saved ID ───
