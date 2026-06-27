@@ -237,6 +237,8 @@ function renderCurrentTab() {
 }
 
 // ─── Login / Logout ───
+const IS_LOCAL = /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])|localhost|127\.)/.test(window.location.hostname);
+
 function doLogin() {
   const pid = document.getElementById("pid-input").value.trim();
   if (!pid) return;
@@ -247,13 +249,16 @@ function doLogin() {
 
   currentParentId = pid;
 
-  // نحاول نجيب إعدادات MQTT من السيرفر (مهلة 5 ثواني)
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
-  fetch(API + "/api/mqtt-config/" + encodeURIComponent(pid), { signal: controller.signal })
+  if (!IS_LOCAL) {
+    // GitHub Pages → نستعمل الإعدادات المضمنة مباشرة
+    connectAndWait(pid, FALLBACK_MQTT_CONFIG);
+    return;
+  }
+
+  // السيرفر المحلي موجود → نجيب إعدادات MQTT
+  fetch(API + "/api/mqtt-config/" + encodeURIComponent(pid))
     .then(r => {
-      clearTimeout(timeout);
-      if (!r.ok) throw new Error("رمز الدخول غير صحيح");
+      if (!r.ok) throw new Error("wrong_code");
       return r.json();
     })
     .then(config => {
@@ -261,14 +266,13 @@ function doLogin() {
       connectAndWait(pid, config);
     })
     .catch(e => {
-      clearTimeout(timeout);
-      if (e.message === "رمز الدخول غير صحيح") {
+      if (e.message === "wrong_code") {
         loader.style.display = "none";
         err.textContent = "رمز الدخول غير صحيح";
         err.style.display = "block";
         return;
       }
-      console.warn("Server unavailable, using fallback config");
+      console.warn("Server error, using fallback config");
       connectAndWait(pid, FALLBACK_MQTT_CONFIG);
     });
 }
