@@ -1,4 +1,4 @@
-const CACHE = "parent-app-v1";
+const CACHE = "parent-app-v2";
 const URLS = [
   ".",
   "icons/icon-192x192.png",
