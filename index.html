@@ -106,6 +106,7 @@ body{font-family:-apple-system,'Segoe UI','Noto Naskh Arabic',sans-serif;backgro
       <div class="login-hint" style="color:rgba(255,255,255,.4);font-size:11px;margin-top:30px">
         رمز الدخول مكون من 8 أحرف وأرقام<br>يُعطى لك من المركز
       </div>
+      <a id="apk-link" href="parent-app.apk" style="display:none;color:rgba(255,255,255,.5);font-size:12px;margin-top:14px;text-decoration:none">📱 تحميل التطبيق (APK)</a>
     </div>
   </div>
 
@@ -136,6 +137,12 @@ body{font-family:-apple-system,'Segoe UI','Noto Naskh Arabic',sans-serif;backgro
 
 <script>
 const API = "";
+
+// Show APK download link on Android
+if (/android/i.test(navigator.userAgent)) {
+  document.getElementById('apk-link').style.display = 'block';
+}
+
 const FALLBACK_MQTT_CONFIG = {
   broker: "92b691ccb7374ba8ad5ad798326a8bd0.s1.eu.hivemq.cloud",
   wss_port: 8884,
@@ -240,19 +247,21 @@ function doLogin() {
 
   currentParentId = pid;
 
-  // 1. نجلب إعدادات MQTT من السيرفر (إن وُجد)
-  fetch(API + "/api/mqtt-config/" + encodeURIComponent(pid))
+  // نحاول نجيب إعدادات MQTT من السيرفر (مهلة 5 ثواني)
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  fetch(API + "/api/mqtt-config/" + encodeURIComponent(pid), { signal: controller.signal })
     .then(r => {
+      clearTimeout(timeout);
       if (!r.ok) throw new Error("رمز الدخول غير صحيح");
       return r.json();
     })
     .then(config => {
-      // 2. نطلب نشر فوري للبيانات عبر MQTT
       fetch(API + "/api/parent/" + encodeURIComponent(pid) + "/refresh").catch(() => {});
       connectAndWait(pid, config);
     })
     .catch(e => {
-      // السيرفر مش موجود (static hosting) → نستخدم الإعدادات المضمنة
+      clearTimeout(timeout);
       if (e.message === "رمز الدخول غير صحيح") {
         loader.style.display = "none";
         err.textContent = "رمز الدخول غير صحيح";
